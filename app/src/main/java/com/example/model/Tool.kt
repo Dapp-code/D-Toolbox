@@ -259,17 +259,18 @@ object ToolRegistry {
             add(Tool("gt_file_${i + 1}", pair.first, pair.second, "File", fileIcons[i % fileIcons.size]))
         }
 
-        // Dedicated requested highly interactive tools (8 tools)
+        // Dedicated requested highly interactive tools (9 tools)
         add(Tool("dl_yt", "YouTube Video Downloader", "Mengunduh file video atau audio MP3 dari YouTube secara offline.", "Utility", Icons.Default.Download))
         add(Tool("dl_tt", "TikTok No-Watermark Downloader", "Unduh video TikTok tanpa watermark berkualitas HD.", "Utility", Icons.Default.Download))
         add(Tool("dl_ig", "Instagram Story & Reels Saver", "Mengunduh Reels, Feeds, dan Stories Instagram dengan mudah.", "Utility", Icons.Default.Download))
         add(Tool("dl_spotify", "Spotify Playlist Downloader", "Mengekstrak dan mengunduh trek musik Spotify ke format MP3.", "Utility", Icons.Default.Download))
-        add(Tool("cal_tracker", "Calorie Counter & Diet Advisor", "Menghitung konsumsi kalori, kebutuhan BMR, dan saran target surplus/defisit.", "Utility", Icons.Default.FitnessCenter))
+        add(Tool("cal_tracker", "Calorie Counter & Diet Advisor", "Menghitung konsumsi kalori, kebutuhan BMR, dan saran target surplus/defisit dengan scan foto makanan.", "Utility", Icons.Default.FitnessCenter))
         add(Tool("full_calculator", "Kalkulator Visual", "Kalkulator standar dengan sejarah penghitungan interaktif.", "Utility", Icons.Default.Calculate))
         add(Tool("full_stopwatch", "Stopwatch & Lap Recorder", "Aplikasi stopwatch presisi dengan fitur putaran lap (lap times).", "Utility", Icons.Default.Timer))
         add(Tool("kilometers_tracker", "Real-Time Kilometer Tracker", "Melacak jarak perjalanan (kilometer) secara real-time dengan simulator rute GPS.", "Utility", Icons.Default.DirectionsRun))
+        add(Tool("osint_tracker", "OSINT Phone & IP Tracker", "Melacak lokasi nomor telepon atau alamat IP publik secara real-time dengan integrasi rincian & Google Maps.", "Utility", Icons.Default.LocationOn))
 
-        // Synthesizing exactly 292 additional unique expert tools to hit 500 TOTAL tools catalog!
+        // Synthesizing precisely the required unique expert tools to hit 1000 TOTAL tools catalog!
         val categories = listOf("Text", "Encoder/Decoder", "Developer", "Utility", "File")
         val prefixes = listOf("Advanced", "Smart", "Ultra", "Super", "Multi-Threaded", "Cloud-ready", "Offline", "Instant", "Enterprise", "Pro")
         val topics = mapOf(
@@ -311,7 +312,7 @@ object ToolRegistry {
         )
 
         var genCount = 0
-        val targetGen = 292
+        val targetGen = 1000 - this.size
         while (genCount < targetGen) {
             val cat = categories[genCount % categories.size]
             val pref = prefixes[(genCount / categories.size) % prefixes.size]

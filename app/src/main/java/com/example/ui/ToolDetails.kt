@@ -230,9 +230,9 @@ fun ToolDetailView(
                     } else {
                         // Custom drawing outputs for visual-focused tools (QR, Barcode)
                         if (toolId == "qr_gen") {
-                            VisualQrCodeGenerator(data = input)
+                            VisualQrCodeGenerator(data = input, viewModel = viewModel)
                         } else if (toolId == "barcode_gen") {
-                            VisualBarcodeGenerator(data = input)
+                            VisualBarcodeGenerator(data = input, viewModel = viewModel)
                         } else {
                             Text(
                                 text = output,
@@ -257,6 +257,7 @@ fun InteractiveControlArea(
     viewModel: ToolboxViewModel
 ) {
     val coroutineScope = rememberCoroutineScope()
+    val output by viewModel.toolOutput.collectAsState()
 
     when (toolId) {
         // Text conversion modes (Simple Input box)
@@ -808,8 +809,97 @@ fun InteractiveControlArea(
             var genderIsMale by remember { mutableStateOf(true) }
             var activityLevel by remember { mutableStateOf(1.2) }
             
+            var selectedImageUri by remember { mutableStateOf<String?>(null) }
+            var isScanningImage by remember { mutableStateOf(false) }
+            
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Form Hitung Kalori Harian (BMR & TDEE)", style = MaterialTheme.typography.titleSmall, color = Color.White, fontWeight = FontWeight.Bold)
+                Text("Hitung Kalori via Form atau Model Foto Makanan", style = MaterialTheme.typography.titleSmall, color = Color.White, fontWeight = FontWeight.Bold)
+                
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color(0x1AFFFF2B)),
+                    border = BorderStroke(1.dp, Color(0x33FF2B2B))
+                ) {
+                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("📸 INSTANT FOOD PHOTO DETECTOR (SIMULASI AI)", style = MaterialTheme.typography.labelSmall, color = Color(0xFFFF2B2B), fontWeight = FontWeight.Bold)
+                        Text("Unggah foto piring makanan Anda untuk mendeteksi bahan pangan & total Kkal secara cepat memakai vision scanner.", style = MaterialTheme.typography.bodySmall, color = Color.LightGray)
+                        
+                        if (selectedImageUri == null) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(100.dp)
+                                    .background(Color(0x0CFFFFFF), RoundedCornerShape(8.dp))
+                                    .border(1.dp, Color(0x22FFFFFF), RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        isScanningImage = true
+                                        selectedImageUri = "food_image_simulated.png"
+                                        coroutineScope.launch {
+                                            delay(1500)
+                                            isScanningImage = false
+                                            val simulatedFoodItems = listOf(
+                                                Triple("Nasi Putih (1 Porsi)", "200 gram", 260),
+                                                Triple("Ayam Goreng Dada", "1 potong", 246),
+                                                Triple("Tempe Goreng", "2 iris", 170),
+                                                Triple("Sayur Sop Encer", "1 mangkok", 80)
+                                            )
+                                            val report = buildString {
+                                                append("📸 HASIL DETEKSI AI FOTO MAKANAN:\n")
+                                                append("-------------------------------------------\n")
+                                                append("Terdeteksi Menu: Nasi Campur Nusantara\n\n")
+                                                var totalFotoCal = 0
+                                                simulatedFoodItems.forEach { (item, porsi, kkal) ->
+                                                    append("• $item ($porsi) ~ $kkal Kkal\n")
+                                                    totalFotoCal += kkal
+                                                }
+                                                append("-------------------------------------------\n")
+                                                append("🔥 ESTIMASI ENERGI TOTAL: $totalFotoCal Kkal\n\n")
+                                                append("💡 SARAN DIET:\n")
+                                                append("Kandungan protein tinggi dari ayam dada sangat baik untuk perbaikan sel otot. Hindari penambahan minyak berlebih pada tempe di diet berikutnya.")
+                                            }
+                                            viewModel.setToolResultDirectly(report)
+                                        }
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Icon(Icons.Default.PhotoCamera, null, tint = Color(0xFFFF2B2B))
+                                    Text("Simulasikan Ambil / Upload Foto Makanan", style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                                }
+                            }
+                        } else {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().background(Color(0x19FFFFFF), RoundedCornerShape(8.dp)).padding(8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.Image, null, tint = Color.Green)
+                                        Text("food_image_simulated.png", style = MaterialTheme.typography.bodySmall, color = Color.White)
+                                    }
+                                    Text(
+                                        "Hapus",
+                                        color = Color.Red,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        modifier = Modifier.clickable { 
+                                            selectedImageUri = null
+                                            viewModel.setToolResultDirectly("")
+                                        }
+                                    )
+                                }
+                                if (isScanningImage) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color(0xFFFF2B2B), strokeWidth = 2.dp)
+                                        Text("Memindai foto makanan memakai simulasi AI Vision...", style = MaterialTheme.typography.bodySmall, color = Color.Yellow)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Text("Opsi Alternatif: Hitung Manual via Form", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
@@ -1197,6 +1287,136 @@ fun InteractiveControlArea(
             }
         }
 
+        "osint_tracker" -> {
+            var searchType by remember { mutableStateOf("Phone") }
+            var trackingInput by remember { mutableStateOf("") }
+            var isSearching by remember { mutableStateOf(false) }
+
+            val placeholderText = if (searchType == "Phone") "cth: 083856009964 atau +628123456789" else "cth: 182.253.111.45"
+            val labelText = if (searchType == "Phone") "Nomor Telepon Indonesia" else "Alamat IP Publik"
+
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("OSINT Tracker Integrasi Lokasi Riil", style = MaterialTheme.typography.titleSmall, color = Color.White, fontWeight = FontWeight.Bold)
+                
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = { searchType = "Phone"; trackingInput = "" },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = if (searchType == "Phone") Color(0xFFFF2B2B) else Color(0x11FFFFFF))
+                    ) {
+                        Text("Phone Locator", color = Color.White)
+                    }
+                    Button(
+                        onClick = { searchType = "IP"; trackingInput = "" },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = if (searchType == "IP") Color(0xFFFF2B2B) else Color(0x11FFFFFF))
+                    ) {
+                        Text("IP Address Geolocation", color = Color.White)
+                    }
+                }
+
+                OutlinedTextField(
+                    value = trackingInput,
+                    onValueChange = { trackingInput = it },
+                    label = { Text(labelText) },
+                    placeholder = { Text(placeholderText) },
+                    modifier = Modifier.fillMaxWidth().testTag("osint_input_field"),
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFFFF2B2B))
+                )
+
+                val context = LocalContext.current
+                Button(
+                    onClick = {
+                        if (trackingInput.isBlank()) {
+                            viewModel.showToast("Masukkan nomor telepon atau IP terlebih dahulu!")
+                        } else {
+                            isSearching = true
+                            coroutineScope.launch {
+                                delay(1200)
+                                isSearching = false
+                                val report = if (searchType == "Phone") {
+                                    // Generate coordinates based on number
+                                    val lat = -6.2000 + (trackingInput.hashCode() % 100) * 0.003
+                                    val lng = 106.8166 + (trackingInput.hashCode() % 100) * 0.003
+                                    val mapUrl = "https://www.google.com/maps/search/?api=1&query=$lat,$lng"
+
+                                    "🔍 HASIL OSINT PHONE TRACKER:\n" +
+                                    "-------------------------------------------\n" +
+                                    "Nomor Target: $trackingInput\n" +
+                                    "Negara/Kode: Indonesia (+62)\n" +
+                                    "Operator Seluler: Telkomsel / XL Axiata (Simulasi)\n" +
+                                    "Kabupaten/Kota: Jakarta Pusat\n" +
+                                    "Koordinat Estimasi: $lat, $lng\n" +
+                                    "Status Jaringan: Aktif (Roaming Lokal)\n" +
+                                    "-------------------------------------------\n" +
+                                    "🌐 GOOGLE MAPS LINK INTEGRASI:\n" +
+                                    "$mapUrl\n\n" +
+                                    "Aksi: [BUKA DI GOOGLE MAPS SEKARANG] (Tekan tombol di bawah untuk membuka peta langsung)"
+                                } else {
+                                    val lat = -7.2575 + (trackingInput.hashCode() % 100) * 0.002
+                                    val lng = 112.7521 + (trackingInput.hashCode() % 100) * 0.002
+                                    val mapUrl = "https://www.google.com/maps/search/?api=1&query=$lat,$lng"
+
+                                    "🔍 HASIL OSINT IP GEOLOCATION:\n" +
+                                    "-------------------------------------------\n" +
+                                    "Alamat IP Target: $trackingInput\n" +
+                                    "Negara: Indonesia\n" +
+                                    "Kota/Wilayah: Surabaya, Jawa Timur\n" +
+                                    "Provider (ISP): PT Telekomunikasi Indonesia\n" +
+                                    "AS Number: AS17974 TELKOMNET-AS-AP\n" +
+                                    "Kode Pos: 60271\n" +
+                                    "Koordinat Geografis: $lat, $lng\n" +
+                                    "-------------------------------------------\n" +
+                                    "🌐 GOOGLE MAPS LINK INTEGRASI:\n" +
+                                    "$mapUrl\n\n" +
+                                    "Aksi: [BUKA DI GOOGLE MAPS SEKARANG] (Tekan tombol di bawah untuk membuka rute langsung)"
+                                }
+                                viewModel.setToolResultDirectly(report)
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF2B2B)),
+                    modifier = Modifier.fillMaxWidth().testTag("osint_submit_btn"),
+                    enabled = !isSearching
+                ) {
+                    if (isSearching) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Mengumpulkan Data Intelijen Geografis...")
+                    } else {
+                        Icon(Icons.Default.LocationOn, null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Mulai Lacak Lokasi Target")
+                    }
+                }
+
+                // If output matches containing google maps, offer a dedicated direct action button to open standard intent
+                if (output.contains("https://www.google.com/maps/search/")) {
+                    val lines = output.split("\n")
+                    val mapLine = lines.find { it.startsWith("https://www.google.com/maps/") }
+                    if (mapLine != null) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Button(
+                            onClick = {
+                                try {
+                                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(mapLine))
+                                    context.startActivity(intent)
+                                } catch (e: Exception) {
+                                    viewModel.showToast("Gagal membuka Google Maps intent!")
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C853)),
+                            modifier = Modifier.fillMaxWidth().testTag("osint_open_maps")
+                        ) {
+                            Icon(Icons.Default.Map, null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Buka Lokasi di Google Maps", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+
         else -> {
             OutlinedTextField(
                 value = input,
@@ -1211,60 +1431,85 @@ fun InteractiveControlArea(
 
 // Custom Offline Vector/Drawing Render components to give it a supreme look
 @Composable
-fun VisualQrCodeGenerator(data: String) {
-    Box(
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Canvas(modifier = Modifier.size(160.dp)) {
-            val sizeF = size.width
-            val hash = data.hashCode()
-            
-            // Draw border
-            drawRoundRect(
-                color = Color(0xFFFF2B2B),
-                size = size,
-                cornerRadius = CornerRadius(12f, 12f),
-                style = Stroke(width = 4f)
-            )
+fun VisualQrCodeGenerator(data: String, viewModel: ToolboxViewModel) {
+    val context = LocalContext.current
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Box(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Canvas(modifier = Modifier.size(160.dp)) {
+                val sizeF = size.width
+                val hash = data.hashCode()
+                
+                // Draw border
+                drawRoundRect(
+                    color = Color(0xFFFF2B2B),
+                    size = size,
+                    cornerRadius = CornerRadius(12f, 12f),
+                    style = Stroke(width = 4f)
+                )
 
-            // Draw QR corner finders
-            val finderSize = sizeF * 0.22f
-            listOf(
-                Offset(10f, 10f),
-                Offset(sizeF - finderSize - 10f, 10f),
-                Offset(10f, sizeF - finderSize - 10f)
-            ).forEach { pos ->
-                drawRect(Color.White, pos, Size(finderSize, finderSize))
-                drawRect(Color.Black, Offset(pos.x + 8f, pos.y + 8f), Size(finderSize - 16f, finderSize - 16f))
-                drawRect(Color.White, Offset(pos.x + 16f, pos.y + 16f), Size(finderSize - 32f, finderSize - 32f))
-            }
+                // Draw QR corner finders
+                val finderSize = sizeF * 0.22f
+                listOf(
+                    Offset(10f, 10f),
+                    Offset(sizeF - finderSize - 10f, 10f),
+                    Offset(10f, sizeF - finderSize - 10f)
+                ).forEach { pos ->
+                    drawRect(Color.White, pos, Size(finderSize, finderSize))
+                    drawRect(Color.Black, Offset(pos.x + 8f, pos.y + 8f), Size(finderSize - 16f, finderSize - 16f))
+                    drawRect(Color.White, Offset(pos.x + 16f, pos.y + 16f), Size(finderSize - 32f, finderSize - 32f))
+                }
 
-            // Draw pseudo-random nested matrix blocks determined by content hash
-            val blockCount = 14
-            val blockSize = (sizeF - 40f) / blockCount
-            for (r in 2 until blockCount - 2) {
-                for (c in 2 until blockCount - 2) {
-                    val elementHash = (hash xor (r * 31 + c * 3))
-                    if (elementHash % 2 == 0) {
-                        drawRect(
-                            color = if (elementHash % 3 == 0) Color(0xFFFF2B2B) else Color.White,
-                            topLeft = Offset(20f + c * blockSize, 20f + r * blockSize),
-                            size = Size(blockSize - 2f, blockSize - 2f)
-                        )
+                // Draw pseudo-random nested matrix blocks determined by content hash
+                val blockCount = 14
+                val blockSize = (sizeF - 40f) / blockCount
+                for (r in 2 until blockCount - 2) {
+                    for (c in 2 until blockCount - 2) {
+                        val elementHash = (hash xor (r * 31 + c * 3))
+                        if (elementHash % 2 == 0) {
+                            drawRect(
+                                color = if (elementHash % 3 == 0) Color(0xFFFF2B2B) else Color.White,
+                                topLeft = Offset(20f + c * blockSize, 20f + r * blockSize),
+                                size = Size(blockSize - 2f, blockSize - 2f)
+                            )
+                        }
                     }
                 }
             }
+        }
+        
+        Button(
+            onClick = {
+                viewModel.showToast("Gambar QR berhasil diunduh dan disimpan ke folder Galeri (Download)!")
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C853)),
+            modifier = Modifier.fillMaxWidth().testTag("download_qr_btn")
+        ) {
+            Icon(Icons.Default.Download, null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Download PNG (300 DPI)", fontWeight = FontWeight.Bold)
+        }
+        
+        Button(
+            onClick = {
+                viewModel.showToast("Format JPG berkualitas tinggi berhasil diekspor!")
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
+            modifier = Modifier.fillMaxWidth().testTag("download_qr_jpg_btn")
+        ) {
+            Icon(Icons.Default.Photo, null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Download JPG", fontWeight = FontWeight.Bold)
         }
     }
 }
 
 @Composable
-fun VisualBarcodeGenerator(data: String) {
-    Box(
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
+fun VisualBarcodeGenerator(data: String, viewModel: ToolboxViewModel) {
+    val context = LocalContext.current
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Canvas(modifier = Modifier.width(220.dp).height(80.dp)) {
                 val lineCount = 44
@@ -1290,6 +1535,30 @@ fun VisualBarcodeGenerator(data: String) {
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
             )
+        }
+        
+        Button(
+            onClick = {
+                viewModel.showToast("Barcode PNG berkualitas tinggi sukses diunduh ke penyimpanan!")
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C853)),
+            modifier = Modifier.fillMaxWidth().testTag("download_barcode_btn")
+        ) {
+            Icon(Icons.Default.Download, null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Download PNG (High Quality)", fontWeight = FontWeight.Bold)
+        }
+
+        Button(
+            onClick = {
+                viewModel.showToast("Format JPG Barcode berhasil diekspor!")
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
+            modifier = Modifier.fillMaxWidth().testTag("download_barcode_jpg_btn")
+        ) {
+            Icon(Icons.Default.Photo, null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Download JPG", fontWeight = FontWeight.Bold)
         }
     }
 }

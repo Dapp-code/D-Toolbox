@@ -1,0 +1,4 @@
+## This file is an example of local.properties.
+## Copy this file to local.properties and set your local Android SDK location.
+# sdk.dir=/Users/YOUR_USERNAME/Library/Android/sdk
+# sdk.dir=C\:\\Users\\YOUR_USERNAME\\AppData\\Local\\Android\\Sdk
