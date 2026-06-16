@@ -1,0 +1,8 @@
+{
+  "name": "D-Toolbox",
+  "description": "One Place, Unlimited Tools. Kumpulan 500+ tools digital modular dengan admin panel dan visual downloaders.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
